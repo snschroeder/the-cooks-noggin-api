@@ -21,7 +21,7 @@ VALUES
   );
 
 INSERT INTO recipes 
-  ("recipe_id", "name", "ingredients", "instructions", "nutrition", "summary")
+  ("id", "name", "ingredients", "instructions", "nutrition", "summary")
 VALUES
   (
     'bec047e6-8156-4531-b898-cfeb22c71114',

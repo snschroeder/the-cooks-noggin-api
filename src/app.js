@@ -8,6 +8,7 @@ const errorHandler = require('./misc/errorHandler');
 const { NODE_ENV, DATABASE_URL } = require('./config');
 const authRouter = require('./auth/auth-router');
 const usersRouter = require('./users/users-router');
+const recipesRouter = require('./recipes/recipes-router');
 
 // =================== //
 // Initial setup       //
@@ -35,8 +36,9 @@ app.set('db', db);
 // Routes              //
 // =================== //
 
-app.use('/api/auth/', authRouter);
-app.use('/api/users/', usersRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/recipes', recipesRouter);
 
 // =================== //
 // Error Handling      //
