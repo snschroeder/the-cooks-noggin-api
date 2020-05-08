@@ -1,9 +1,10 @@
+/* eslint-disable camelcase */
 const express = require('express');
 const RecipesService = require('./recipes-service');
 const UsersService = require('../users/users-service');
 
 const recipesRouter = express.Router();
-// const jsonParser = express.json();
+const jsonParser = express.json();
 
 recipesRouter
   .route('/all').get(async (req, res) => {
@@ -17,10 +18,9 @@ recipesRouter
 
 recipesRouter
   .route('/user/:user_id').get(async (req, res) => {
-    // eslint-disable-next-line camelcase
     const { user_id } = req.params;
 
-    if (RecipesService.validateUUID(user_id)) {
+    if (!RecipesService.validateUUID(user_id)) {
       return res.status(400).json({ error: 'user id is invalid' });
     }
 
@@ -35,14 +35,40 @@ recipesRouter
       return res.status(400).json({ error: 'user has no recipes saved' });
     }
     return res.status(200).json(userRecipes);
+  })
+  .post(jsonParser, async (req, res) => {
+    const { user_id } = req.params;
+    const {
+      name,
+      ingredients,
+      instructions,
+      nutrition,
+      summary,
+      image_url,
+    } = req.body;
+
+    if (!RecipesService.validateUUID(user_id)) {
+      return res.status(400).json({ error: 'user id is invalid' });
+    }
+    const user = await UsersService.getUser(req.app.get('db'), user_id);
+
+    if (!user) {
+      return res.status(400).json({ error: 'user does not exist' });
+    }
+
+    if (!name || !ingredients || !instructions) {
+      return res.status(400).json({ error: 'invalid recipe provided' });
+    }
+
+    const newRecipe = await RecipesService.addRecipe(req.app.get('db'), name, ingredients, instructions, nutrition, summary, image_url);
+    return res.status(201).json(newRecipe);
   });
 
 recipesRouter
   .route('/recipe/:recipe_id').get(async (req, res) => {
-    // eslint-disable-next-line camelcase
     const { recipe_id } = req.params;
 
-    if (RecipesService.validateUUID(recipe_id)) {
+    if (!RecipesService.validateUUID(recipe_id)) {
       return res.status(400).json({ error: 'recipe id is invalid' });
     }
 

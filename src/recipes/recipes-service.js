@@ -1,5 +1,5 @@
 const RecipesService = {
-  validateUUID: (id) => id.length !== 36,
+  validateUUID: (id) => id.length === 36 && typeof (id) === 'string',
 
   getAllRecipes: (db) => db('recipes')
     .select('*'),
@@ -16,6 +16,18 @@ const RecipesService = {
     .join('recipes', function () {
       this.on('recipes.id', '=', 'recipe_saves.recipe_id');
     }),
+
+  // eslint-disable-next-line camelcase
+  addRecipe: (db, name, ingredients, instructions, nutrition, summary, image_url) => db('recipes')
+    .insert({
+      name,
+      ingredients,
+      instructions,
+      nutrition,
+      summary,
+      image_url,
+    })
+    .returning('id'),
 };
 
 module.exports = RecipesService;
