@@ -1,7 +1,10 @@
 /* eslint-disable camelcase */
 const express = require('express');
+const xss = require('xss');
 const RecipesService = require('./recipes-service');
 const UsersService = require('../users/users-service');
+const AuthService = require('../auth/auth-service');
+const { protectedWithJWT } = require('../middleware/auth')
 
 const recipesRouter = express.Router();
 const jsonParser = express.json();
@@ -35,10 +38,13 @@ recipesRouter
       return res.status(400).json({ error: 'user has no recipes saved' });
     }
     return res.status(200).json(userRecipes);
-  })
-  .post(jsonParser, async (req, res) => {
-    const { user_id } = req.params;
-    const {
+  });
+
+recipesRouter
+  .route('/')
+  .post(protectedWithJWT, jsonParser, async (req, res) => {
+    let {
+      user,
       name,
       ingredients,
       instructions,
@@ -47,21 +53,32 @@ recipesRouter
       image_url,
     } = req.body;
 
-    if (!RecipesService.validateUUID(user_id)) {
-      return res.status(400).json({ error: 'user id is invalid' });
-    }
-    const user = await UsersService.getUser(req.app.get('db'), user_id);
-
-    if (!user) {
-      return res.status(400).json({ error: 'user does not exist' });
+    if (!name || !ingredients || !instructions || !user) {
+      return res.status(400).json({ error: 'invalid data provided' });
     }
 
-    if (!name || !ingredients || !instructions) {
-      return res.status(400).json({ error: 'invalid recipe provided' });
+    const userSanitization = Object.entries(user);
+
+    for (let i = 0; i < userSanitization.length; i += 1) {
+      user[userSanitization[i][0]] = xss(userSanitization[i][1]);
     }
 
-    const newRecipe = await RecipesService.addRecipe(req.app.get('db'), name, ingredients, instructions, nutrition, summary, image_url);
-    return res.status(201).json(newRecipe);
+    name = xss(name);
+    ingredients = xss(ingredients);
+    instructions = xss(instructions);
+    nutrition = xss(nutrition);
+    summary = xss(summary);
+    image_url = xss(image_url);
+
+    const newRecipeId = await RecipesService.addRecipe(req.app.get('db'), name, ingredients, instructions, nutrition, summary, image_url, user.id);
+
+    await RecipesService.saveRecipe(req.app.get('db'), ...newRecipeId, user.id, name);
+
+    const sanityCheck = await RecipesService.getAllSaves(req.app.get('db'));
+
+    console.log(sanityCheck);
+
+    return res.status(201).json(newRecipeId);
   });
 
 recipesRouter

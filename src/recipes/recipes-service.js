@@ -28,6 +28,18 @@ const RecipesService = {
       image_url,
     })
     .returning('id'),
+
+  // eslint-disable-next-line camelcase
+  saveRecipe: (db, recipe_id, user_id, recipe_name) => db('recipe_saves')
+    .insert({
+      recipe_id,
+      user_id,
+      recipe_name,
+    })
+    .returning('recipe_id'),
+
+  getAllSaves: (db) => db('recipe_saves')
+    .select('*'),
 };
 
 module.exports = RecipesService;
