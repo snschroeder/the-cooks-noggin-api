@@ -3,8 +3,7 @@ const express = require('express');
 const xss = require('xss');
 const RecipesService = require('./recipes-service');
 const UsersService = require('../users/users-service');
-const AuthService = require('../auth/auth-service');
-const { protectedWithJWT } = require('../middleware/auth')
+const { protectedWithJWT } = require('../middleware/auth');
 
 const recipesRouter = express.Router();
 const jsonParser = express.json();
@@ -44,6 +43,7 @@ recipesRouter
   .route('/')
   .post(protectedWithJWT, jsonParser, async (req, res) => {
     let {
+      // eslint-disable-next-line prefer-const
       user,
       name,
       ingredients,
@@ -71,13 +71,7 @@ recipesRouter
     image_url = xss(image_url);
 
     const newRecipeId = await RecipesService.addRecipe(req.app.get('db'), name, ingredients, instructions, nutrition, summary, image_url, user.id);
-
     await RecipesService.saveRecipe(req.app.get('db'), ...newRecipeId, user.id, name);
-
-    const sanityCheck = await RecipesService.getAllSaves(req.app.get('db'));
-
-    console.log(sanityCheck);
-
     return res.status(201).json(newRecipeId);
   });
 
